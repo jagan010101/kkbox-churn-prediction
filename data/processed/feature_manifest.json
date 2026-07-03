@@ -1,0 +1,55 @@
+{
+  "feature_cutoff": "2016-12-31",
+  "ltv_target_window": [
+    20170101,
+    20170228
+  ],
+  "engagement_window": [
+    20161202,
+    20161231
+  ],
+  "targets": {
+    "churn": "is_churn",
+    "ltv_log": "log1p_ltv",
+    "ltv_raw": "ltv"
+  },
+  "categorical": {
+    "city": {
+      "column": "city_enc",
+      "cardinality": 22,
+      "embedding_dim": 5,
+      "unknown_index": 21
+    },
+    "gender": {
+      "column": "gender_enc",
+      "cardinality": 4,
+      "embedding_dim": 2,
+      "unknown_index": 3
+    },
+    "registered_via": {
+      "column": "registered_via_enc",
+      "cardinality": 6,
+      "embedding_dim": 3,
+      "unknown_index": 5
+    },
+    "payment_method_id": {
+      "column": "payment_method_id_enc",
+      "cardinality": 35,
+      "embedding_dim": 8,
+      "unknown_index": 34
+    }
+  },
+  "numerical_scaled": [
+    "bd_clean_scaled",
+    "registration_tenure_days_scaled",
+    "avg_payment_plan_days_scaled",
+    "avg_actual_amount_paid_scaled",
+    "num_transactions_scaled",
+    "total_secs_log_scaled",
+    "daily_active_days_scaled"
+  ],
+  "numerical_unscaled": [
+    "is_auto_renew_rate",
+    "avg_song_completion"
+  ]
+}

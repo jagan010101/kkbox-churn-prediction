@@ -1,9 +1,13 @@
-# Data size runs into multiple GBs
-data/raw/
-data/processed/
+# Data size runs into multiple GBs - ignore contents, keep folder structure
+data/raw/*
+data/processed/*
 
 # Keep the small, human-readable feature manifest
 !data/processed/feature_manifest.json
+
+# Keep empty data folders visible in git
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 
 # Jupyter / Python
 .ipynb_checkpoints/
