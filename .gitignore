@@ -1,0 +1,18 @@
+# Data size runs into multiple GBs
+data/raw/
+data/processed/
+
+# Keep the small, human-readable feature manifest
+!data/processed/feature_manifest.json
+
+# Jupyter / Python
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+
+# Editor/tooling
+.claude/
+.tmp/

@@ -1,0 +1,8 @@
+{
+  "model": "exp6_uncertainty_isotonic_calibrated",
+  "churn_auc_roc": 0.84361358626796,
+  "churn_auc_pr": 0.3576546587588102,
+  "ltv_rmse_raw_twd": 59.0595817565918,
+  "ltv_mae_raw_twd": 30.485960006713867,
+  "ltv_r2_raw": 0.4913053512573242
+}
