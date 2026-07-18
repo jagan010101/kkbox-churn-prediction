@@ -13,9 +13,18 @@ data/processed/*
 .ipynb_checkpoints/
 __pycache__/
 *.pyc
+*.egg-info/
+.pytest_cache/
 
 # OS
 .DS_Store
+__MACOSX/
+
+# CatBoost's auto-generated per-run training log directory
+catboost_info/
+
+# Optuna study storage (Phase 5) - large, regenerable
+*.db
 
 # Editor/tooling
 .claude/
