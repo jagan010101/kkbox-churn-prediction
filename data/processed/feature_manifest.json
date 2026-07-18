@@ -1,13 +1,10 @@
 {
-  "feature_cutoff": "2016-12-31",
-  "ltv_target_window": [
-    20170101,
-    20170228
-  ],
-  "engagement_window": [
-    20161202,
-    20161231
-  ],
+  "methodology": "per-user event-based reference date (fixes survivorship bias vs. a single global snapshot cutoff)",
+  "ref_date_max_cutoff": "2016-12-31",
+  "ltv_window_days": 59,
+  "churn_grace_days": 30,
+  "engagement_window_days": 30,
+  "excludes_free_trial_ref_cycles": true,
   "targets": {
     "churn": "is_churn",
     "ltv_log": "log1p_ltv",
@@ -28,15 +25,15 @@
     },
     "registered_via": {
       "column": "registered_via_enc",
-      "cardinality": 6,
+      "cardinality": 7,
       "embedding_dim": 3,
-      "unknown_index": 5
+      "unknown_index": 6
     },
     "payment_method_id": {
       "column": "payment_method_id_enc",
-      "cardinality": 35,
+      "cardinality": 40,
       "embedding_dim": 8,
-      "unknown_index": 34
+      "unknown_index": 39
     }
   },
   "numerical_scaled": [
