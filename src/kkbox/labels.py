@@ -1,17 +1,31 @@
-"""Per-user event-based reference date, churn label, and LTV target construction.
+"""Per-user event-based reference date, churn label, and forward-revenue target construction.
 
 This is the fix for the survivorship bias in KKBox's official train/train_v2
 snapshot labels (see 02_Feature_Engineering.ipynb and 01_EDA.ipynb for the
 full discussion): each user's label is computed relative to their OWN last
 subscription cycle, not one shared global snapshot date.
 
-The SQL here is a direct, parameterized extraction of what's already been
-validated in 02_Feature_Engineering.ipynb (model_dataset_*.parquet, ref_date
-capped at ref_date_max_cutoff so a full ltv_window_days of forward data is
-always observable) and 01_EDA.ipynb / 08_GBT_Baseline_Comparison.ipynb (the
-Cox survival model, which uses the uncapped population since handling
+Naming note: the forward-looking revenue target (`fwd_rev_59d`) is
+deliberately NOT called "LTV" - a 59-day window is two billing cycles of
+observed revenue, not a customer's lifetime value. See config.yaml's
+`labels.fwd_rev_window_days` and project_report.md section 3.2 for the
+two-billing-cycle justification.
+
+The SQL here is a direct, parameterized extraction of the *label/target*
+construction validated in 02_Feature_Engineering.ipynb (ref_date, is_churn,
+fwd_rev_59d) and 01_EDA.ipynb / 03a_CatBoost_and_Cox_Models.ipynb (the Cox
+survival model, which uses the uncapped population since handling
 right-censored users properly is the entire reason to use a survival model).
-Do not change this logic without re-validating against tests/test_labels.py.
+tests/test_labels.py covers this and is the contract - do not change
+build_ref_dates/build_churn_labels/build_fwd_rev_targets without
+re-validating against it.
+
+This module used to also have feature-column builders (build_txn_features,
+build_latest_txn, build_engagement_features, build_feature_table) mirroring
+02's per-user feature table, but they'd drifted out of sync with 02 (stuck
+at the original 13-column version while 02 grew to 27) and were untested -
+removed rather than left as misleading dead code. Only the label/target
+construction lives here now.
 """
 
 import pandas as pd
@@ -49,7 +63,7 @@ def build_ref_dates(con, txn_table, ref_date_max_cutoff=None, guard_corrupted_ex
     cases). When True, `expire_dt >= txn_dt` excludes these from being
     treated as a real cycle boundary - this is the historically correct
     behavior, applied in 01_EDA.ipynb's survival analysis and
-    08_GBT_Baseline_Comparison.ipynb's Cox model.
+    03a_CatBoost_and_Cox_Models.ipynb's Cox model.
 
     IMPORTANT: 02_Feature_Engineering.ipynb's currently-deployed pipeline
     (the one behind the committed models/*.pt checkpoints) predates this
@@ -105,120 +119,18 @@ def build_churn_labels(con, txn_table, ref_dates_table, churn_grace_days, table_
     return table_name
 
 
-def build_ltv_targets(con, txn_table, ref_dates_table, ltv_window_days, table_name="ltv_targets"):
-    """Forward-looking revenue: sum(actual_amount_paid) in (ref_date, ref_date + ltv_window_days]."""
-    con.execute(f"""
-        create or replace temp table {table_name} as
-        select t.msno, sum(t.actual_amount_paid) as ltv
-        from {txn_table} t join {ref_dates_table} r using (msno)
-        where t.txn_dt > r.ref_date and t.txn_dt <= r.ref_date + interval {ltv_window_days} day
-        group by t.msno
-    """)
-    return table_name
+def build_fwd_rev_targets(con, txn_table, ref_dates_table, fwd_rev_window_days, table_name="fwd_rev_targets"):
+    """Forward-looking revenue: sum(actual_amount_paid) in (ref_date, ref_date + fwd_rev_window_days].
 
-
-def build_txn_features(con, txn_table, ref_dates_table, table_name="txn_agg"):
-    """Pre-ref_date transaction aggregates: num_transactions, avg plan days/price, auto-renew rate."""
-    con.execute(f"""
-        create or replace temp table {table_name} as
-        select t.msno,
-               count(*) as num_transactions,
-               avg(t.payment_plan_days) as avg_payment_plan_days,
-               avg(t.actual_amount_paid) as avg_actual_amount_paid,
-               avg(t.is_auto_renew) as is_auto_renew_rate
-        from {txn_table} t join {ref_dates_table} r using (msno)
-        where t.txn_dt <= r.ref_date
-        group by t.msno
-    """)
-    return table_name
-
-
-def build_latest_txn(con, txn_table, ref_dates_table, table_name="latest_txn"):
-    """Most recent payment_method_id (and other latest-txn fields) as of each user's ref_date."""
-    con.execute(f"""
-        create or replace temp table {table_name} as
-        select msno, payment_method_id, is_auto_renew, is_cancel, payment_plan_days from (
-            select t.msno, t.payment_method_id, t.is_auto_renew, t.is_cancel, t.payment_plan_days,
-                   row_number() over (partition by t.msno order by t.txn_dt desc) rn
-            from {txn_table} t join {ref_dates_table} r using (msno)
-            where t.txn_dt <= r.ref_date
-        ) where rn = 1
-    """)
-    return table_name
-
-
-def build_engagement_features(con, user_logs_path, ref_dates_table, engagement_window_days, table_name="logs_agg"):
-    """Trailing listening-activity aggregates over [ref_date - (window-1), ref_date].
-
-    total_secs is clipped to [0, 86400] - a small fraction of user_logs rows
-    have corrupted extreme values (see 01_EDA.ipynb, "Scanning the full
-    user_logs history" section).
+    Named fwd_rev_59d downstream, not "LTV" - this is observed revenue over
+    a fixed short window (two billing cycles at the default 59 days), not a
+    customer's lifetime value.
     """
     con.execute(f"""
         create or replace temp table {table_name} as
-        select l.msno,
-               count(distinct l.log_dt) as daily_active_days,
-               sum(greatest(least(l.total_secs, 86400), 0)) as total_secs_sum,
-               sum(l.num_25) as sum25, sum(l.num_50) as sum50, sum(l.num_75) as sum75,
-               sum(l.num_985) as sum985, sum(l.num_100) as sum100
-        from (
-            select *, strptime(cast(date as varchar), '%Y%m%d')::date as log_dt
-            from '{user_logs_path}'
-        ) l
-        join {ref_dates_table} r using (msno)
-        where l.log_dt >= r.ref_date - interval {engagement_window_days - 1} day
-          and l.log_dt <= r.ref_date
-        group by l.msno
+        select t.msno, sum(t.actual_amount_paid) as fwd_rev_59d
+        from {txn_table} t join {ref_dates_table} r using (msno)
+        where t.txn_dt > r.ref_date and t.txn_dt <= r.ref_date + interval {fwd_rev_window_days} day
+        group by t.msno
     """)
     return table_name
-
-
-def build_feature_table(con, transactions_path, members_path, user_logs_path, label_cfg,
-                         ref_date_max_cutoff=None, guard_corrupted_expiry=True, include_ltv=True):
-    """One row per user: msno, ref_date, is_churn, ltv (if include_ltv), members
-    demographics, and pre-ref_date transaction/engagement aggregates.
-
-    This reproduces 02_Feature_Engineering.ipynb's merge_query exactly (when
-    called with the same ref_date_max_cutoff/guard_corrupted_expiry it uses)
-    and 08_GBT_Baseline_Comparison.ipynb's Cox survival feature table (when
-    called with ref_date_max_cutoff=None, include_ltv=False).
-
-    label_cfg: the 'labels' section of config.yaml (churn_grace_days,
-    ltv_window_days, engagement_window_days, ...).
-    """
-    txn_table = cast_transaction_dates(con, transactions_path, require_paid=label_cfg["require_paid_ref_cycle"])
-    ref_dates = build_ref_dates(con, txn_table, ref_date_max_cutoff, guard_corrupted_expiry)
-    churn = build_churn_labels(con, txn_table, ref_dates, label_cfg["churn_grace_days"])
-    txn_agg = build_txn_features(con, txn_table, ref_dates)
-    latest_txn = build_latest_txn(con, txn_table, ref_dates)
-    logs_agg = build_engagement_features(con, user_logs_path, ref_dates, label_cfg["engagement_window_days"])
-
-    ltv_select, ltv_join = "", ""
-    if include_ltv:
-        ltv = build_ltv_targets(con, txn_table, ref_dates, label_cfg["ltv_window_days"])
-        ltv_select = "coalesce(lt.ltv, 0) as ltv,"
-        ltv_join = f"left join {ltv} lt using (msno)"
-
-    return con.execute(f"""
-        select
-            r.msno, r.ref_date, cf.is_churn,
-            m.city, m.bd, m.gender, m.registered_via, m.registration_init_time,
-            {ltv_select}
-            coalesce(txn_agg.num_transactions, 0) as num_transactions,
-            txn_agg.avg_payment_plan_days,
-            txn_agg.avg_actual_amount_paid,
-            coalesce(txn_agg.is_auto_renew_rate, 0) as is_auto_renew_rate,
-            latest_txn.payment_method_id,
-            coalesce(logs_agg.daily_active_days, 0) as daily_active_days,
-            coalesce(logs_agg.total_secs_sum, 0) as total_secs_sum,
-            coalesce(logs_agg.sum25, 0) as sum25, coalesce(logs_agg.sum50, 0) as sum50,
-            coalesce(logs_agg.sum75, 0) as sum75, coalesce(logs_agg.sum985, 0) as sum985,
-            coalesce(logs_agg.sum100, 0) as sum100
-        from {ref_dates} r
-        left join {churn} cf using (msno)
-        left join '{members_path}' m using (msno)
-        left join {txn_agg} txn_agg using (msno)
-        left join {latest_txn} latest_txn using (msno)
-        left join {logs_agg} logs_agg using (msno)
-        {ltv_join}
-    """).df()

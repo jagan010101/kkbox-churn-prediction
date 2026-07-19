@@ -1,7 +1,11 @@
 """Seeds every source of randomness used in this project.
 
-Known remaining nondeterminism is documented in docs/reproducibility.md rather
-than silently assumed away - see that file before relying on bit-identical
+Known remaining nondeterminism (see project_report.md section 10): a few ops
+have no deterministic implementation on all backends (warn_only=True lets
+these proceed with a warning rather than raising), BatchNorm backward passes
+aren't guaranteed bit-exact across runs, and DuckDB's multi-threaded query
+execution means wall-clock timing (not correctness) varies run to run. Only
+same-machine, same-backend reproducibility is claimed - not bit-identical
 reruns across machines/backends.
 """
 

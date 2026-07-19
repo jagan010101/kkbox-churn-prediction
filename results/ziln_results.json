@@ -1,0 +1,12 @@
+{
+  "val": {
+    "fwd_rev_rmse_raw_twd": 133.65836478765442,
+    "fwd_rev_mae_raw_twd": 54.87233495002807,
+    "fwd_rev_r2_raw": 0.3419904010994941
+  },
+  "test": {
+    "fwd_rev_rmse_raw_twd": 131.5244345194702,
+    "fwd_rev_mae_raw_twd": 54.42480772226232,
+    "fwd_rev_r2_raw": 0.34898621933976726
+  }
+}

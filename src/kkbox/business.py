@@ -1,31 +1,37 @@
 """Retention Priority Score, budget allocation, and rank-sensitivity analysis.
 
-Extracted from 06_Calibration_and_Business_Layer.ipynb, including this
-session's percentile-rescaling fix: since the survivorship-bias fix, churn
-is the majority outcome (~74%), so raw calibrated P(churn) clusters too
-tightly to discriminate ranking on its own - p_churn used throughout is
-each user's *percentile rank* of the raw calibrated probability, not the
-probability itself (kept alongside as p_churn_raw).
+Extracted from 04_Calibration_and_Business_Layer.ipynb. Since the
+survivorship-bias fix, churn is the majority outcome (~74%), so raw
+calibrated P(churn) clusters too tightly to discriminate ranking on its
+own - p_churn used throughout is each user's *percentile rank* of the raw
+calibrated probability, not the probability itself (kept alongside as
+p_churn_raw).
+
+Forward-revenue rename: e_ltv -> e_fwd_rev (see project_report.md section 3.2).
 """
 
 import numpy as np
 import pandas as pd
 
 
-def build_priority_scores(msno, is_churn, p_churn_calibrated, ltv_pred_log):
+def build_priority_scores(msno, is_churn, p_churn_calibrated, fwd_rev_pred_raw):
     """One row per user: p_churn_raw (calibrated probability), p_churn (its
-    percentile rank - used for the priority score), e_ltv (raw-TWD LTV
-    prediction), priority_score = p_churn * e_ltv. Sorted descending by
-    priority_score with a 1-indexed rank column.
+    percentile rank - used for the priority score), e_fwd_rev (raw-TWD
+    forward-revenue prediction), priority_score = p_churn * e_fwd_rev.
+    Sorted descending by priority_score with a 1-indexed rank column.
+
+    fwd_rev_pred_raw must already be in raw TWD (e.g. from a Tweedie-loss
+    model trained directly on fwd_rev_59d) - callers whose regressor instead
+    predicts log1p(fwd_rev_59d) must expm1() before passing it in here.
     """
     results = pd.DataFrame({
         "msno": msno,
         "is_churn": is_churn,
         "p_churn_raw": p_churn_calibrated,
-        "e_ltv": np.expm1(ltv_pred_log),
+        "e_fwd_rev": fwd_rev_pred_raw,
     })
     results["p_churn"] = results["p_churn_raw"].rank(pct=True)
-    results["priority_score"] = results["p_churn"] * results["e_ltv"]
+    results["priority_score"] = results["p_churn"] * results["e_fwd_rev"]
     results = results.sort_values("priority_score", ascending=False).reset_index(drop=True)
     results["rank"] = np.arange(1, len(results) + 1)
     return results
@@ -33,7 +39,7 @@ def build_priority_scores(msno, is_churn, p_churn_calibrated, ltv_pred_log):
 
 def five_segment_illustration(results, segments=None):
     """Picks a real user closest to each segment's median priority score,
-    using the 33rd/67th percentiles of p_churn and e_ltv as low/med/high
+    using the 33rd/67th percentiles of p_churn and e_fwd_rev as low/med/high
     thresholds.
     """
     segments = segments or [
@@ -44,15 +50,15 @@ def five_segment_illustration(results, segments=None):
         ("low", "low", "No action: below cost-of-retention threshold"),
     ]
     p_lo, p_hi = results["p_churn"].quantile([0.33, 0.67])
-    v_lo, v_hi = results["e_ltv"].quantile([0.33, 0.67])
+    v_lo, v_hi = results["e_fwd_rev"].quantile([0.33, 0.67])
 
     def pick_example(risk, value):
         p_mask = (results["p_churn"] < p_lo if risk == "low"
                   else results["p_churn"] > p_hi if risk == "high"
                   else results["p_churn"].between(p_lo, p_hi))
-        v_mask = (results["e_ltv"] < v_lo if value == "low"
-                  else results["e_ltv"] > v_hi if value == "high"
-                  else results["e_ltv"].between(v_lo, v_hi))
+        v_mask = (results["e_fwd_rev"] < v_lo if value == "low"
+                  else results["e_fwd_rev"] > v_hi if value == "high"
+                  else results["e_fwd_rev"].between(v_lo, v_hi))
         subset = results[p_mask & v_mask]
         return subset.iloc[(subset["priority_score"] - subset["priority_score"].median()).abs().argmin()]
 
@@ -61,7 +67,7 @@ def five_segment_illustration(results, segments=None):
         row = pick_example(risk, value)
         rows.append({
             "segment": f"{risk}-risk, {value}-value", "p_churn_percentile": row["p_churn"],
-            "p_churn_raw": row["p_churn_raw"], "e_ltv_twd": row["e_ltv"],
+            "p_churn_raw": row["p_churn_raw"], "e_fwd_rev_twd": row["e_fwd_rev"],
             "priority_score": row["priority_score"], "recommended_action": action,
         })
     return pd.DataFrame(rows)
@@ -108,8 +114,8 @@ def rank_sensitivity(results, n_interventions, perturbation=0.10):
     top_k_summary_dict).
     """
     results = results.copy()
-    results["score_upper"] = (results["p_churn"] * (1 + perturbation)).clip(0, 1) * results["e_ltv"]
-    results["score_lower"] = (results["p_churn"] * (1 - perturbation)).clip(0, 1) * results["e_ltv"]
+    results["score_upper"] = (results["p_churn"] * (1 + perturbation)).clip(0, 1) * results["e_fwd_rev"]
+    results["score_lower"] = (results["p_churn"] * (1 - perturbation)).clip(0, 1) * results["e_fwd_rev"]
     results["rank_upper"] = results["score_upper"].rank(ascending=False)
     results["rank_lower"] = results["score_lower"].rank(ascending=False)
     results["rank_delta"] = (results["rank_upper"] - results["rank_lower"]).abs()

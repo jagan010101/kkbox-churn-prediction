@@ -1,14 +1,14 @@
 {
   "methodology": "per-user event-based reference date (fixes survivorship bias vs. a single global snapshot cutoff)",
   "ref_date_max_cutoff": "2016-12-31",
-  "ltv_window_days": 59,
+  "fwd_rev_window_days": 59,
   "churn_grace_days": 30,
   "engagement_window_days": 30,
   "excludes_free_trial_ref_cycles": true,
   "targets": {
     "churn": "is_churn",
-    "ltv_log": "log1p_ltv",
-    "ltv_raw": "ltv"
+    "fwd_rev_log": "log1p_fwd_rev_59d",
+    "fwd_rev_raw": "fwd_rev_59d"
   },
   "categorical": {
     "city": {
@@ -43,10 +43,24 @@
     "avg_actual_amount_paid_scaled",
     "num_transactions_scaled",
     "total_secs_log_scaled",
-    "daily_active_days_scaled"
+    "daily_active_days_scaled",
+    "num_distinct_payment_methods_scaled",
+    "avg_num_unq_songs_scaled",
+    "recent_engagement_ratio_scaled",
+    "txn_frequency_scaled",
+    "days_since_last_login_scaled",
+    "days_since_last_cancel_scaled",
+    "secs_trend_recent_vs_prior_scaled",
+    "numunq_trend_recent_vs_prior_scaled",
+    "most_recent_payment_plan_days_scaled",
+    "most_recent_actual_amount_paid_scaled"
   ],
   "numerical_unscaled": [
     "is_auto_renew_rate",
-    "avg_song_completion"
+    "avg_song_completion",
+    "is_cancel_rate",
+    "avg_discount_rate",
+    "most_recent_is_auto_renew",
+    "most_recent_is_cancel"
   ]
 }

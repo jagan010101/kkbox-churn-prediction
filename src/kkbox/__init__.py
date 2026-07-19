@@ -1,13 +1,13 @@
-"""KKBox churn/LTV prediction: shared code extracted from notebooks 02-08."""
+"""KKBox churn/forward-revenue prediction: shared code extracted from notebooks 02-05."""
 
 __all__ = [
     "config",
     "determinism",
     "labels",
     "data",
-    "models",
-    "train",
+    "preprocessing",
     "calibrate",
-    "metrics",
     "business",
+    "fwd_rev",
+    "ziln",
 ]

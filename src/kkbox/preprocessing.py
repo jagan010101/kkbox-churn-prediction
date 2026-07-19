@@ -1,7 +1,10 @@
 """Categorical encoding, numerical scaling, and imputation.
 
-Extracted from 02_Feature_Engineering.ipynb. The leak-free invariant this
-project relies on: every encoder/scaler/imputation statistic is fit on the
+Mirrors the encoder/scaler/imputation logic in 02_Feature_Engineering.ipynb
+(which reimplements this inline rather than importing it - not currently
+wired into the notebook, only exercised by tests/test_encoders.py and
+tests/test_scaler.py). The leak-free invariant both this module and the
+notebook rely on: every encoder/scaler/imputation statistic is fit on the
 train split ONLY, then applied unchanged to val/test.
 """
 

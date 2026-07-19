@@ -26,6 +26,9 @@ catboost_info/
 # Optuna study storage (Phase 5) - large, regenerable
 *.db
 
+# run_pipeline.sh's timestamped log files - regenerable, not source
+pipeline_run_*.log
+
 # Editor/tooling
 .claude/
 .tmp/

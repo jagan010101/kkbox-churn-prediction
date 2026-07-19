@@ -1,0 +1,33 @@
+{
+  "churn": {
+    "depth": 6,
+    "learning_rate": 0.12355655587403722,
+    "l2_leaf_reg": 7.252785471204157,
+    "bagging_temperature": 0.274484973282481,
+    "random_strength": 0.0002490009866875922
+  },
+  "fwd_rev": {
+    "depth": 8,
+    "learning_rate": 0.10529815068058854,
+    "l2_leaf_reg": 5.362153198694923,
+    "bagging_temperature": 0.004537534206282334,
+    "random_strength": 0.06993558647077869,
+    "variance_power": 1.2410989438322284
+  },
+  "cox": {
+    "depth": 5,
+    "learning_rate": 0.17854360608707254,
+    "l2_leaf_reg": 7.587945476302646,
+    "bagging_temperature": 0.5986584841970366,
+    "random_strength": 3.63233925694314e-08
+  },
+  "ziln": {
+    "hidden_dim1": 256,
+    "hidden_dim2": 64,
+    "dropout1": 0.21610737493812396,
+    "dropout2": 0.1321766045027286,
+    "learning_rate": 0.0009600461498177444,
+    "weight_decay": 0.0008792815436511888,
+    "batch_size": 2048
+  }
+}

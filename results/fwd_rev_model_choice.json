@@ -1,0 +1,8 @@
+{
+  "winner": "catboost",
+  "decision_rule": "lower test RMSE (raw TWD) wins; ties go to catboost",
+  "catboost_test_rmse": 127.86917151883941,
+  "catboost_test_r2": 0.384668712598333,
+  "ziln_test_rmse": 131.5244345194702,
+  "ziln_test_r2": 0.34898621933976726
+}

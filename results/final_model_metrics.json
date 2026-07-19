@@ -1,8 +1,10 @@
 {
-  "model": "exp6_uncertainty_isotonic_calibrated",
-  "churn_auc_roc": 0.9321083840047075,
-  "churn_auc_pr": 0.971435994683752,
-  "ltv_rmse_raw_twd": 153.7383575439453,
-  "ltv_mae_raw_twd": 67.52839660644531,
-  "ltv_r2_raw": 0.09884721040725708
+  "model": "catboost_churn_isotonic_calibrated+catboost_fwd_rev",
+  "fwd_rev_model": "catboost",
+  "churn_auc_roc": 0.9607037981085421,
+  "churn_auc_pr": 0.9830660020586863,
+  "fwd_rev_rmse_raw_twd": 127.86917151883941,
+  "fwd_rev_mae_raw_twd": 50.27261380710525,
+  "fwd_rev_r2_raw": 0.384668712598333,
+  "cox_concordance_index": 0.9649307983148397
 }

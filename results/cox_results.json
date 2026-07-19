@@ -1,8 +1,8 @@
 {
   "val": {
-    "concordance_index": 0.9415309210623506
+    "concordance_index": 0.9645562649071165
   },
   "test": {
-    "concordance_index": 0.9413097450469667
+    "concordance_index": 0.9649307983148397
   }
 }

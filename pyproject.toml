@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kkbox"
 version = "0.1.0"
-description = "Multi-task churn/LTV prediction on the KKBox WSDM 2017 dataset"
+description = "Churn and forward-revenue prediction on the KKBox WSDM 2017 dataset (CatBoost + Cox survival, ZILN neural net as challenger)"
 requires-python = ">=3.12"
 dependencies = [
     "numpy==2.4.3",
@@ -21,13 +21,13 @@ dependencies = [
     "catboost==1.2.10",
     "lifelines==0.30.3",
     "pyyaml>=6.0",
+    "optuna==4.9.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
     "ipykernel==7.2.0",
-    "papermill>=2.6",
     "nbconvert>=7.0",
 ]
 

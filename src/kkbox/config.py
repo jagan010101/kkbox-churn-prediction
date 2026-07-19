@@ -31,8 +31,8 @@ def load_config(path=None):
         cfg = yaml.safe_load(f)
 
     global_max_date = pd.Timestamp(cfg["labels"]["global_max_date"])
-    ltv_window_days = cfg["labels"]["ltv_window_days"]
-    ref_date_cutoff = global_max_date - pd.Timedelta(days=ltv_window_days)
+    fwd_rev_window_days = cfg["labels"]["fwd_rev_window_days"]
+    ref_date_cutoff = global_max_date - pd.Timedelta(days=fwd_rev_window_days)
 
     cfg["derived"] = {
         "global_max_date": global_max_date,

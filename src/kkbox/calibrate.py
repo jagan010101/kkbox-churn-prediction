@@ -1,12 +1,10 @@
-"""ECE computation, temperature scaling, isotonic regression.
+"""ECE computation and isotonic regression.
 
-Extracted from 06_Calibration_and_Business_Layer.ipynb.
+Extracted from 04_Calibration_and_Business_Layer.ipynb.
 """
 
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn as nn
 from sklearn.isotonic import IsotonicRegression
 
 
@@ -38,22 +36,6 @@ def reliability_diagram(ax, bin_stats, ece, title):
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.legend(fontsize=7)
-
-
-def fit_temperature(val_logit, val_churn_true, lr=0.01, max_iter=50):
-    """Single learned scalar T dividing the logit before sigmoid (fit on validation, weights frozen)."""
-    temperature = nn.Parameter(torch.ones(1))
-    optimizer = torch.optim.LBFGS([temperature], lr=lr, max_iter=max_iter)
-    bce_fn = nn.BCEWithLogitsLoss()
-
-    def closure():
-        optimizer.zero_grad()
-        loss = bce_fn(val_logit / temperature, val_churn_true)
-        loss.backward()
-        return loss
-
-    optimizer.step(closure)
-    return temperature
 
 
 def fit_isotonic(val_probs_raw, val_true):

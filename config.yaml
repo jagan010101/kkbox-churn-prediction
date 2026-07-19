@@ -1,11 +1,19 @@
-# Central configuration for the KKBox churn/LTV project.
-# Every constant that was previously hard-coded across notebooks 02-08 lives here;
+# Central configuration for the KKBox churn/forward-revenue project.
+# Every constant that was previously hard-coded across notebooks 02-06 lives here;
 # src/kkbox code reads from this file via kkbox.config.load_config().
+#
+# Naming note: the revenue target is called "forward revenue" (fwd_rev_59d),
+# not "LTV" - a 59-day window is two billing cycles of observed revenue, not
+# a customer's lifetime value. See project_report.md section 3.2 for
+# the full argument.
 
 labels:
-  # Forward-looking revenue window length (days). Matches the original
-  # 2017-01-01..2017-02-28 span used before this became config-driven.
-  ltv_window_days: 59
+  # Forward-revenue window length (days): two ~30-day billing cycles, so a
+  # single missed/late renewal doesn't zero out the target. Matches the
+  # original 2017-01-01..2017-02-28 span used before this became config-driven,
+  # but that's a coincidence of the Kaggle data's span, not the reason for 59 -
+  # see project_report.md section 3.2 for the two-billing-cycle argument.
+  fwd_rev_window_days: 59
   # KKBox's own churn definition: no renewal transaction within this many days
   # of a subscription's expiry counts as churn.
   churn_grace_days: 30
@@ -17,6 +25,12 @@ labels:
   # free-trial-only signups don't count as a subscription cycle to churn from.
   require_paid_ref_cycle: true
 
+# NOTE: not currently read by any notebook or src/kkbox module (verified: no
+# cfg["preprocessing"] reference anywhere) - 02_Feature_Engineering.ipynb defines
+# its own CATEGORICAL_COLS/SCALE_COLS/UNSCALED_NUMERICAL_COLS inline instead, and
+# has grown from the 9-numerical-column set below to 23 across two feature passes
+# since this section was written. Left here as historical/reference config rather
+# than deleted, but do not assume it reflects the current feature set.
 preprocessing:
   categorical_cols: [city, gender, registered_via, payment_method_id]
   embedding_dims:

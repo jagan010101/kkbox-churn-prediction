@@ -1,0 +1,22 @@
+{
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "seed_paths": [
+    "ziln_seed42.pt",
+    "ziln_seed43.pt",
+    "ziln_seed44.pt",
+    "ziln_seed45.pt",
+    "ziln_seed46.pt"
+  ],
+  "architecture_config": {
+    "hidden_dim1": 256,
+    "hidden_dim2": 64,
+    "dropout1": 0.21610737493812396,
+    "dropout2": 0.1321766045027286
+  }
+}

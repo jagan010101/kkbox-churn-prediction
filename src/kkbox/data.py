@@ -14,13 +14,13 @@ class KKBoxDataset(Dataset):
         self.x_cat = torch.tensor(df[cat_cols].values, dtype=torch.long)
         self.x_num = torch.tensor(df[num_cols].values, dtype=torch.float32)
         self.y_churn = torch.tensor(df["is_churn"].values, dtype=torch.float32)
-        self.y_ltv = torch.tensor(df["log1p_ltv"].values, dtype=torch.float32)
+        self.y_fwd_rev = torch.tensor(df["log1p_fwd_rev_59d"].values, dtype=torch.float32)
 
     def __len__(self):
         return len(self.y_churn)
 
     def __getitem__(self, idx):
-        return self.x_num[idx], self.x_cat[idx], self.y_churn[idx], self.y_ltv[idx]
+        return self.x_num[idx], self.x_cat[idx], self.y_churn[idx], self.y_fwd_rev[idx]
 
 
 def columns_from_manifest(manifest):
