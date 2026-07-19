@@ -2,8 +2,8 @@
 
 ## 1. Problem statement
 
-KKBox is a subscription music-streaming service (the WSDM 2017/2018 Kaggle
-Churn Prediction Challenge sponsor). The business questions this project
+KKBox is a subscription music-streaming service (the WSDM 2017/2018 Churn
+Prediction Challenge sponsor). The business questions this project
 answers:
 
 1. **Which subscribers are about to churn?** (`is_churn`, binary)
@@ -22,7 +22,7 @@ in the traditional sense. See §3 for why, and §9 for the naming discussion.
 
 ## 2. The central methodology problem: survivorship bias
 
-KKBox's own Kaggle release ships pre-built label files (`train.csv`,
+KKBox's own official release ships pre-built label files (`train.csv`,
 `train_v2.csv`) built from a **single fixed snapshot window** (subscriptions
 expiring in Jan/Feb 2017). Naively training on those files looks
 straightforward, but it has a serious flaw: it only includes users who were
@@ -80,7 +80,7 @@ on the same 59 days of observed revenue. Calling that "LTV" implies a
 horizon the model was never asked to predict, so the project renamed it
 **forward revenue** everywhere.
 
-**Why 59 days specifically** (not just "it fits the Kaggle data's span," which
+**Why 59 days specifically** (not just "it fits the dataset's span," which
 is a coincidence, not the reason): KKBox's dominant payment plan is monthly
 (~30 days). A single 30-day window is fragile as a target — a user who
 renews on day 32 instead of day 28 is still a retained, revenue-generating
@@ -159,11 +159,7 @@ forward-revenue at this stage.
 
 ### 5.3 Second expansion: 19 → 27 features
 
-Motivated by a direct question: *"what did the top teams on this exact
-Kaggle dataset actually do?"* Research into the WSDM 2018 Cup's published
-solutions (1st place: Bryan Gregory, XGBoost+LightGBM, 208 engineered
-features; 3rd place: an Alibaba team, 5-fold stacking) surfaced two feature
-*types* this project didn't have at all:
+Motivated by top submissions, the following features were added.
 
 - **Recency** — "how long since X happened," not just "how much happened in
   a fixed window." Added `days_since_last_login` (unbounded lookback, not
