@@ -18,7 +18,7 @@ model, since a large share of the population is right-censored (still an
 active subscriber with no resolved outcome yet).
 
 The project deliberately does **not** predict customer lifetime value (LTV)
-in the traditional sense. See §3 for why, and §9 for the naming discussion.
+in the traditional sense. See §3.2 for why, and for the naming discussion.
 
 ## 2. The central methodology problem: survivorship bias
 
